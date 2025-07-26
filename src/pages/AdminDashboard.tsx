@@ -80,7 +80,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <SidebarProvider collapsedWidth={56}>
+    <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-muted/20">
         <AdminSidebar />
         

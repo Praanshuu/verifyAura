@@ -37,9 +37,10 @@ const secondaryItems = [
 ];
 
 export function AdminSidebar() {
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
+  const collapsed = state === "collapsed";
 
   const isActive = (path: string) => currentPath === path || (path === "/admin" && currentPath === "/admin");
   const isGroupActive = (items: typeof mainItems) => items.some((item) => isActive(item.url));
@@ -50,7 +51,7 @@ export function AdminSidebar() {
       : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-60"} collapsible>
+    <Sidebar className={collapsed ? "w-14" : "w-60"} collapsible="icon">
       <SidebarContent>
         {/* Brand */}
         <div className="p-4 border-b">
@@ -67,7 +68,7 @@ export function AdminSidebar() {
         </div>
 
         {/* Main Navigation */}
-        <SidebarGroup open={isGroupActive(mainItems)}>
+        <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -86,7 +87,7 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         {/* Secondary Navigation */}
-        <SidebarGroup open={isGroupActive(secondaryItems)}>
+        <SidebarGroup>
           <SidebarGroupLabel>System</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
