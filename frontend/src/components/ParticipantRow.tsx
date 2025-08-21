@@ -1,0 +1,133 @@
+import {
+    TableRow,
+    TableCell,
+  } from "@/components/ui/table";
+  import {
+    Ban,
+    CheckCircle,
+    XCircle,
+    Eye,
+    MoreHorizontal,
+    Download,
+  } from "lucide-react";
+  import { Button } from "@/components/ui/button";
+  import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSeparator,
+  } from "@/components/ui/dropdown-menu";
+  import { Badge } from "@/components/ui/badge";
+  import {
+    Tooltip,
+    TooltipTrigger,
+    TooltipContent,
+  } from "@/components/ui/tooltip";
+  import { formatDateTime } from "@/lib/utils/date";
+  import { ParticipantWithEvent } from "@/features/participants/api";
+
+  interface ParticipantRowProps {
+    participant: ParticipantWithEvent;
+    onRevoke: (id: string) => void;
+    onUnrevoke: (id: string) => void;
+  }
+
+  export function ParticipantRow({
+    participant,
+    onRevoke,
+    onUnrevoke,
+  }: ParticipantRowProps) {
+    return (
+      <TableRow className="hover:bg-muted/30 transition-colors">
+        <TableCell>
+          <div className="font-medium">{participant.name}</div>
+        </TableCell>
+        <TableCell>
+          <div className="text-muted-foreground">{participant.email}</div>
+        </TableCell>
+        <TableCell>
+          <code className="text-xs bg-muted/50 px-2 py-1 rounded">
+            {participant.certificate_id}
+          </code>
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center space-x-2">
+            <Badge
+              className={
+                participant.revoked
+                  ? "bg-destructive/10 text-destructive border-destructive/20"
+                  : "bg-brand-green/10 text-brand-green border-brand-green/20"
+              }
+            >
+              {participant.revoked ? (
+                <>
+                  <XCircle className="h-3 w-3 mr-1" /> Revoked
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-3 w-3 mr-1" /> Active
+                </>
+              )}
+            </Badge>
+            {participant.revoke_reason && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Eye className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">{participant.revoke_reason}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </TableCell>
+        <TableCell className="text-sm text-muted-foreground">
+          {formatDateTime(participant.created_at)}
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center space-x-2">
+            {!participant.revoked ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-lg text-destructive border-destructive/20 hover:bg-destructive/10"
+                onClick={() => onRevoke(participant.id)}
+              >
+                <Ban className="h-3 w-3 mr-1" /> Revoke
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-lg text-brand-green border-brand-green/20 hover:bg-brand-green/10"
+                onClick={() => onUnrevoke(participant.id)}
+              >
+                <CheckCircle className="h-3 w-3 mr-1" /> Restore
+              </Button>
+            )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <Eye className="h-4 w-4 mr-2" /> View Details
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Download className="h-4 w-4 mr-2" /> Download Certificate
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive">
+                  <Ban className="h-4 w-4 mr-2" /> Remove Participant
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }

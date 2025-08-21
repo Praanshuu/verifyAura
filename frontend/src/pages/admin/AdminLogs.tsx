@@ -1,0 +1,344 @@
+import { useState, useEffect } from "react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AdminSidebar } from "@/components/AdminSidebar";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useLogs } from "@/hooks/useLogs";
+import { LoadingState } from "@/components/LoadingState";
+import { 
+  History, 
+  Search, 
+  Filter,
+  Download,
+  Eye,
+  User,
+  Calendar,
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  RefreshCw
+} from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PageHeader } from "@/components/AdminPageHeader";
+import { SearchFilterBar } from "@/components/SearchFilterBar";
+import { DataTable } from "@/components/DataTable";
+
+const AdminLogs = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState({
+    search: "",
+    action: "",
+    sort_by: "created_at",
+    sort_order: "desc" as "asc" | "desc",
+  });
+
+  const { logs, loading, error, pagination, refreshLogs, updateParams } = useLogs({
+    page: currentPage,
+    limit: 50,
+    search: filters.search,
+    action: filters.action || undefined,
+    sort_by: filters.sort_by,
+    sort_order: filters.sort_order,
+  });
+
+  const getLogIcon = (action: string) => {
+    if (action.toLowerCase().includes('success') || action.toLowerCase().includes('issued') || action.toLowerCase().includes('created')) {
+      return <CheckCircle className="h-4 w-4 text-green-600" />;
+    } else if (action.toLowerCase().includes('warning') || action.toLowerCase().includes('failed')) {
+      return <AlertTriangle className="h-4 w-4 text-orange-600" />;
+    } else if (action.toLowerCase().includes('error')) {
+      return <AlertTriangle className="h-4 w-4 text-red-600" />;
+    } else {
+      return <Info className="h-4 w-4 text-blue-600" />;
+    }
+  };
+
+  const getLogBadge = (action: string) => {
+    if (action.toLowerCase().includes('success') || action.toLowerCase().includes('issued') || action.toLowerCase().includes('created')) {
+      return "bg-green-500/10 text-green-600";
+    } else if (action.toLowerCase().includes('warning') || action.toLowerCase().includes('failed')) {
+      return "bg-orange-500/10 text-orange-600";
+    } else if (action.toLowerCase().includes('error')) {
+      return "bg-red-500/10 text-red-600";
+    } else {
+      return "bg-blue-500/10 text-blue-600";
+    }
+  };
+
+  // Update filters when search term changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setFilters(prev => ({ ...prev, search: searchTerm }));
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const handleFilterChange = (newFilters: Partial<typeof filters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-muted/20">
+        <AdminSidebar />
+        
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <PageHeader
+            title="Activity Logs"
+            subtitle="Monitor system activities and user actions"
+            rightContent={
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={refreshLogs}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+                <Button variant="outline" size="sm" className="rounded-xl">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Logs
+                </Button>
+                <ThemeToggle />
+              </>
+            }
+          />
+
+          
+          {/* Main Content */}
+          <main className="flex-1 p-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              <Card className="glassmorphic dark:glassmorphic-dark border-0 shadow-md">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 rounded-xl bg-blue-500/10">
+                      <Activity className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground mb-1">
+                    {pagination.total}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Total Activities</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="glassmorphic dark:glassmorphic-dark border-0 shadow-md">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 rounded-xl bg-green-500/10">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground mb-1">
+                    {logs.filter(l => l.action.toLowerCase().includes('success') || l.action.toLowerCase().includes('issued') || l.action.toLowerCase().includes('created')).length}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Successful Actions</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="glassmorphic dark:glassmorphic-dark border-0 shadow-md">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 rounded-xl bg-orange-500/10">
+                      <AlertTriangle className="h-5 w-5 text-orange-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground mb-1">
+                    {logs.filter(l => l.action.toLowerCase().includes('warning') || l.action.toLowerCase().includes('failed')).length}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Warnings</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="glassmorphic dark:glassmorphic-dark border-0 shadow-md">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 rounded-xl bg-purple-500/10">
+                      <History className="h-5 w-5 text-purple-600" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground mb-1">
+                    24h
+                  </div>
+                  <p className="text-sm text-muted-foreground">Recent Activity</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filters and Search */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <SearchFilterBar
+                search={{
+                  value: searchTerm,
+                  onChange: setSearchTerm,
+                  placeholder: "Search activities...",
+                }}
+                filters={[
+                  {
+                    value: filters.action,
+                    onChange: (value) => handleFilterChange({ action: value }),
+                    placeholder: "Action Type",
+                    options: [
+                      { label: "All Actions", value: "" },
+                      { label: "Event Created", value: "event_created" },
+                      { label: "Event Updated", value: "event_updated" },
+                      { label: "Event Deleted", value: "event_deleted" },
+                      { label: "Participant Created", value: "participant_created" },
+                      { label: "Participant Updated", value: "participant_updated" },
+                      { label: "Participant Deleted", value: "participant_deleted" },
+                      { label: "Certificate Revoked", value: "participant_revoked" },
+                      { label: "Certificate Restored", value: "participant_unrevoked" },
+                    ],
+                  },
+                  {
+                    value: filters.sort_by,
+                    onChange: (value) => handleFilterChange({ sort_by: value }),
+                    placeholder: "Sort By",
+                    options: [
+                      { label: "Created Date", value: "created_at" },
+                      { label: "Action", value: "action" },
+                      { label: "User Email", value: "user_email" },
+                    ],
+                  },
+                ]}
+              />
+            </div>
+
+            {/* Activity Logs Table */}
+            {loading ? (
+              <LoadingState />
+            ) : error ? (
+              <div className="text-center py-8">
+                <p className="text-red-600 mb-4">{error}</p>
+                <Button onClick={refreshLogs} variant="outline">
+                  Try Again
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Card className="glassmorphic dark:glassmorphic-dark border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle>System Activity Log</CardTitle>
+                    <CardDescription>
+                      Chronological list of system activities and user actions
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                  <DataTable
+                    columns={["Timestamp", "Action", "User", "Metadata"]}
+                    rows={logs}
+                    renderRow={(log) => (
+                      <TableRow key={log.id}>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <div className="text-sm">
+                                {new Date(log.created_at).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(log.created_at).toLocaleTimeString()}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            {getLogIcon(log.action)}
+                            <span className="font-medium">{log.action}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span>{log.user_email}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
+                          {Object.keys(log.metadata).length > 0
+                            ? JSON.stringify(log.metadata)
+                            : "No additional data"}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  />
+                  </CardContent>
+                </Card>
+
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                  <div className="flex justify-center mt-8">
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      
+                      <span className="text-sm text-muted-foreground">
+                        Page {currentPage} of {pagination.totalPages}
+                      </span>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === pagination.totalPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+};
+
+export default AdminLogs;
