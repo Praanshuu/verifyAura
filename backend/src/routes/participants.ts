@@ -81,6 +81,7 @@ router.get('/', requireAdmin, async (req, res) => {
 
     // Return validation errors if any
     if (errors.length > 0) {
+      console.log('[PARTICIPANTS QUERY] Validation errors:', errors);
       return res.status(400).json({
         success: false,
         message: 'Invalid query parameters',
@@ -88,6 +89,8 @@ router.get('/', requireAdmin, async (req, res) => {
         allowedSortFields: QueryParser.getAllowedSortFields('participants')
       });
     }
+
+    console.log('[PARTICIPANTS QUERY] Executing with:', { filters, sort, pagination });
 
     // Sanitize search term if provided
     if (filters.search) {
@@ -98,18 +101,17 @@ router.get('/', requireAdmin, async (req, res) => {
     const result = await queryBuilder.queryParticipants(filters, sort, pagination);
 
     // Log the query for debugging
-    console.log(`[PARTICIPANTS QUERY] ${QueryParser.buildQueryString({ filters, sort, pagination })} - ${result.meta.queryTime}ms`);
+    console.log(`[PARTICIPANTS QUERY] Success, returned ${result.data?.length} participants - ${result.meta.queryTime}ms`);
 
-    return res.status(200).json({
-      success: true,
-      ...result
-    });
+    return res.status(200).json(result);
 
   } catch (error) {
     console.error('[PARTICIPANTS QUERY ERROR]', error);
+    console.error('[PARTICIPANTS QUERY ERROR] Stack:', error instanceof Error ? error.stack : 'No stack trace');
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch participants',
+      code: 'PARTICIPANTS_FETCH_FAILED',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
@@ -151,10 +153,7 @@ router.get('/:id', requireAdmin, async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      data: data
-    });
+    return res.status(200).json(data);
 
   } catch (error) {
     console.error('[GET PARTICIPANT ERROR]', error);
@@ -268,11 +267,7 @@ router.post('/', requireAdmin, async (req, res) => {
       },
     }]);
 
-    return res.status(201).json({
-      success: true,
-      message: 'Participant created successfully',
-      data: data
-    });
+    return res.status(201).json(data);
 
   } catch (error) {
     console.error('[CREATE PARTICIPANT ERROR]', error);

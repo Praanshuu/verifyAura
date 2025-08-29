@@ -7,7 +7,11 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
   try {
     const { userId } = getAuth(req);
     if (!userId) {
-      res.status(401).json({ success: false, message: 'Unauthorized' });
+      res.status(401).json({ 
+        success: false, 
+        message: 'Unauthorized - No valid session found',
+        code: 'NO_SESSION'
+      });
       return;
     }
 
@@ -24,7 +28,8 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     console.error('Authentication error:', error);
     res.status(401).json({
       success: false,
-      message: 'Authentication failed',
+      message: 'Authentication failed - Invalid or expired token',
+      code: 'AUTH_FAILED',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
     return;
@@ -56,8 +61,12 @@ export const requireAdmin = async (req: Request, res: Response, next: NextFuncti
   try {
     const { userId } = getAuth(req);
     if (!userId) {
-      res.status(401).json({ success: false, message: 'Unauthorized' });
-      return; // Remove return value
+      res.status(401).json({ 
+        success: false, 
+        message: 'Unauthorized - Admin access required',
+        code: 'NO_SESSION'
+      });
+      return;
     }
     
     const user = await clerkClient.users.getUser(userId);
@@ -65,11 +74,12 @@ export const requireAdmin = async (req: Request, res: Response, next: NextFuncti
     
     if (role !== 'admin') {
       console.warn(`Forbidden access attempt by user: ${userId} (Role: ${role})`);
-      res.status(403).json({ // Remove return value
+      res.status(403).json({
         success: false, 
-        message: 'Admin privileges required' 
+        message: 'Admin privileges required',
+        code: 'INSUFFICIENT_PERMISSIONS'
       });
-      return; // Add explicit void return
+      return;
     }
     
     (req as any).auth = {
@@ -83,9 +93,10 @@ export const requireAdmin = async (req: Request, res: Response, next: NextFuncti
     next();
   } catch (error) {
     console.error('Authorization error:', error);
-    res.status(500).json({ // Remove return value
+    res.status(500).json({
       success: false, 
       message: 'Authorization check failed',
+      code: 'AUTH_CHECK_FAILED',
       error: error instanceof Error ? error.message : 'Internal server error'
     });
   }

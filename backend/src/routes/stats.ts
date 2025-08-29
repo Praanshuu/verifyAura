@@ -13,6 +13,11 @@ statsRouter.get("/", requireAdmin, async (req, res) => {
     res.status(200).json(stats);
   } catch (error) {
     console.error("[STATS ERROR]", error);
-    res.status(500).json({ error: "Failed to load dashboard stats" });
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to load dashboard stats",
+      code: "STATS_FETCH_FAILED",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
   }
 });

@@ -57,14 +57,15 @@ const EventDetails = () => {
         }
         
         // Fetch event details
-        const eventResponse = await getEventById(token, id);
-        setEvent(eventResponse.data);
+        const eventResponse = await getEventById(id, token);
+        setEvent(eventResponse);
         
         // Fetch participants
-        const participantsResponse = await getParticipantsByEvent(token, id, 1, 1000); // Get all participants
-        setParticipants(participantsResponse.data);
+        const participantsResponse = await getParticipantsByEvent(id, 1, 1000, token); // Get all participants
+        setParticipants(participantsResponse.data || []);
         
       } catch (err) {
+        console.error('Error fetching event data:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch event data');
         toast({
           title: "Error",
@@ -77,7 +78,7 @@ const EventDetails = () => {
     };
 
     fetchData();
-  }, [id, toast, user]);
+  }, [id, getToken, toast]);
 
   const handleCertificateAction = async (participantId: string, action: "revoke" | "unrevoke") => {
     setIsLoading(true);
@@ -100,8 +101,8 @@ const EventDetails = () => {
       
       // Refresh participants data
       if (id) {
-        const participantsResponse = await getParticipantsByEvent(token, id, 1, 1000);
-        setParticipants(participantsResponse.data);
+        const participantsResponse = await getParticipantsByEvent(id, 1, 1000, token);
+        setParticipants(participantsResponse.data || []);
       }
       
       // Log the action

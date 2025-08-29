@@ -69,6 +69,7 @@ router.get('/events', requireAdmin, async (req, res) => {
     const { filters, sort, pagination, errors } = QueryParser.parseQueryParams(req);
 
     if (errors.length > 0) {
+      console.log('[EVENTS QUERY] Validation errors:', errors);
       return res.status(400).json({
         success: false,
         message: 'Invalid query parameters',
@@ -77,19 +78,22 @@ router.get('/events', requireAdmin, async (req, res) => {
       });
     }
 
+    console.log('[EVENTS QUERY] Executing with:', { filters, sort, pagination });
+
     // Execute query
     const result = await queryBuilder.queryEvents(filters, sort, pagination);
 
-    return res.status(200).json({
-      success: true,
-      ...result
-    });
+    console.log('[EVENTS QUERY] Success, returned', result.data?.length, 'events');
+
+    return res.status(200).json(result);
 
   } catch (error) {
     console.error('[EVENTS QUERY ERROR]', error);
+    console.error('[EVENTS QUERY ERROR] Stack:', error instanceof Error ? error.stack : 'No stack trace');
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch events',
+      code: 'EVENTS_FETCH_FAILED',
       error: error instanceof Error ? error.message : 'Database error'
     });
   }
@@ -165,10 +169,7 @@ router.get('/events/:id', requireAdmin, async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      data: data
-    });
+    return res.status(200).json(data);
 
   } catch (error) {
     console.error('[GET EVENT ERROR]', error);
@@ -247,11 +248,7 @@ router.post('/events', requireAdmin, async (req, res) => {
       },
     }]);
 
-    return res.status(201).json({
-      success: true,
-      message: 'Event created successfully',
-      data: data
-    });
+    return res.status(201).json(data);
 
   } catch (error) {
     console.error('[CREATE EVENT ERROR]', error);
@@ -327,11 +324,7 @@ router.put('/events/:id', requireAdmin, async (req, res) => {
       },
     }]);
 
-    return res.status(200).json({
-      success: true,
-      message: 'Event updated successfully',
-      data: data
-    });
+    return res.status(200).json(data);
 
   } catch (error) {
     console.error('[UPDATE EVENT ERROR]', error);

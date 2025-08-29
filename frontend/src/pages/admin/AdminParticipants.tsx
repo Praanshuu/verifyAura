@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAllParticipants, ParticipantWithEvent } from "@/features/participants/api";
 import { LoadingState } from "@/components/LoadingState";
 import { Link } from "react-router-dom";
+import { useAuth } from '@clerk/clerk-react';
 import { 
   Users, 
   Plus, 
@@ -44,13 +45,20 @@ const AdminParticipants = () => {
   const [participants, setParticipants] = useState<ParticipantWithEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { getToken } = useAuth();
 
   const fetchParticipants = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getAllParticipants();
-      setParticipants(data.participants);
+      
+      const token = await getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+      
+      const response = await getAllParticipants(1, 1000, token); // Get all participants
+      setParticipants(response.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch participants');
     } finally {

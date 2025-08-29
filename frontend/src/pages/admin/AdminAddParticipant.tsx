@@ -42,7 +42,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { getEventById } from "@/features/events/api";
 import { createParticipant } from "@/features/participants/api";
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 
 const participantSchema = z.object({
   name: z.string().min(1, "Name is required").min(2, "Name must be at least 2 characters"),
@@ -61,6 +61,7 @@ interface Participant {
 const AdminAddParticipant = () => {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { getToken } = useAuth();
   const { id: eventId } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [recentParticipants, setRecentParticipants] = useState<Participant[]>([]);
@@ -166,7 +167,12 @@ const AdminAddParticipant = () => {
         revoked: false,
       };
   
-      const newParticipant = await createParticipant(participantData);
+      const token = await getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+      
+      const newParticipant = await createParticipant(participantData, token);
   
       const participantForDisplay: Participant = {
         id: newParticipant.id,

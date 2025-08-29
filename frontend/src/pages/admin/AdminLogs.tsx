@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLogs } from "@/hooks/useLogs";
 import { LoadingState } from "@/components/LoadingState";
+import { useAuth } from '@clerk/clerk-react';
 import { 
   History, 
   Search, 
@@ -46,12 +47,12 @@ const AdminLogs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     search: "",
-    action: "",
+    action: "all",
     sort_by: "created_at",
     sort_order: "desc" as "asc" | "desc",
   });
 
-  const { logs, loading, error, pagination, refreshLogs, updateParams } = useLogs({
+  const { logs, loading, error, pagination, refreshLogs } = useLogs({
     page: currentPage,
     limit: 50,
     search: filters.search,
@@ -149,7 +150,7 @@ const AdminLogs = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-foreground mb-1">
-                    {pagination.total}
+                    {pagination?.total || 0}
                   </div>
                   <p className="text-sm text-muted-foreground">Total Activities</p>
                 </CardContent>
@@ -218,7 +219,7 @@ const AdminLogs = () => {
                     onChange: (value) => handleFilterChange({ action: value }),
                     placeholder: "Action Type",
                     options: [
-                      { label: "All Actions", value: "" },
+                      { label: "All Actions", value: "all" },
                       { label: "Event Created", value: "event_created" },
                       { label: "Event Updated", value: "event_updated" },
                       { label: "Event Deleted", value: "event_deleted" },
@@ -305,7 +306,7 @@ const AdminLogs = () => {
                 </Card>
 
                 {/* Pagination */}
-                {pagination.totalPages > 1 && (
+                {pagination && pagination.totalPages > 1 && (
                   <div className="flex justify-center mt-8">
                     <div className="flex items-center space-x-2">
                       <Button

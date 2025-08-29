@@ -8,22 +8,42 @@ export const getAdminStats = async () => {
     const [
       eventsQuery,
       participantsQuery,
-      logsQuery
+      logsQuery,
+      revokedQuery,
+      recentLogsQuery
     ] = await Promise.all([
       supabase.from("events").select("*", { count: "exact" }),
       supabase.from("participants").select("*", { count: "exact" }),
-      supabase.from("activity_logs").select("*", { count: "exact" })
+      supabase.from("activity_logs").select("*", { count: "exact" }),
+      supabase.from("participants").select("id").eq("revoked", true),
+      supabase
+        .from("activity_logs")
+        .select("id, action, user_email, created_at, metadata")
+        .order("created_at", { ascending: false })
+        .limit(5)
     ]);
 
     // Handle errors
     if (eventsQuery.error) throw eventsQuery.error;
     if (participantsQuery.error) throw participantsQuery.error;
     if (logsQuery.error) throw logsQuery.error;
+    if (revokedQuery.error) throw revokedQuery.error;
+    if (recentLogsQuery.error) throw recentLogsQuery.error;
+
+    const totalEvents = eventsQuery.count || 0;
+    const totalParticipants = participantsQuery.count || 0;
+    const totalRevoked = revokedQuery?.data?.length || 0;
+    const totalActiveCertificates = totalParticipants - totalRevoked;
+    const recentActivitiesCount = logsQuery.count || 0;
 
     return {
-      events: eventsQuery.count || 0,
-      participants: participantsQuery.count || 0,
-      logs: logsQuery.count || 0,
+      total_events: totalEvents,
+      active_events: totalEvents, // For now, consider all events as active
+      total_participants: totalParticipants,
+      total_revoked: totalRevoked,
+      total_active_certificates: totalActiveCertificates,
+      recent_activities_count: recentActivitiesCount,
+      recent_activities: recentLogsQuery.data || [],
     };
   } catch (error) {
     console.error('[STATS SERVICE ERROR]', error);

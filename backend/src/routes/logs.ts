@@ -49,16 +49,68 @@ router.get('/', requireAdmin, async (req, res) => {
     // Log the query for debugging
     console.log(`[LOGS QUERY] ${QueryParser.buildQueryString({ filters, sort, pagination })} - ${result.meta.queryTime}ms`);
 
-    return res.status(200).json({
-      success: true,
-      ...result
-    });
+    return res.status(200).json(result);
 
   } catch (error) {
     console.error('[LOGS QUERY ERROR]', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch activity logs',
+      code: 'LOGS_FETCH_FAILED',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * POST /api/admin/logs
+ * Create a new activity log entry
+ */
+router.post('/', requireAdmin, async (req, res) => {
+  try {
+    const { user_id, user_email, action, metadata } = req.body;
+
+    // Validate required fields
+    if (!user_id || !action) {
+      return res.status(400).json({
+        success: false,
+        message: 'user_id and action are required',
+        code: 'MISSING_REQUIRED_FIELDS'
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('activity_logs')
+      .insert([{
+        user_id,
+        user_email: user_email || null,
+        action,
+        metadata: metadata || null,
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to create activity log',
+        code: 'LOG_CREATION_FAILED',
+        error: error.message
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Activity log created successfully',
+      data: data
+    });
+
+  } catch (error) {
+    console.error('[CREATE LOG ERROR]', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create activity log',
+      code: 'LOG_CREATION_FAILED',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
@@ -79,6 +131,7 @@ router.get('/actions', requireAdmin, async (_req, res) => {
       return res.status(500).json({
         success: false,
         message: 'Failed to fetch action types',
+        code: 'ACTIONS_FETCH_FAILED',
         error: error.message
       });
     }
@@ -96,6 +149,7 @@ router.get('/actions', requireAdmin, async (_req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch action types',
+      code: 'ACTIONS_FETCH_FAILED',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
@@ -125,6 +179,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
       return res.status(500).json({
         success: false,
         message: 'Failed to fetch log statistics',
+        code: 'LOG_STATS_FETCH_FAILED',
         error: error.message
       });
     }
@@ -183,6 +238,7 @@ router.get('/stats', requireAdmin, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch log statistics',
+      code: 'LOG_STATS_FETCH_FAILED',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }

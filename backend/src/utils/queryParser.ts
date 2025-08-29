@@ -1,5 +1,3 @@
-//backend/src/utils/queryParser.ts
-
 import { Request } from 'express';
 
 export type QueryFilters = {
@@ -51,9 +49,10 @@ export class QueryParser {
     if (typeof q.date_from === 'string') filters.date_from = q.date_from;
     if (typeof q.date_to === 'string') filters.date_to = q.date_to;
 
-    // Sort
+    // Sort - provide better defaults based on the endpoint
+    const defaultSortField = this.getDefaultSortField(req.path);
     const sort: SortOptions = {
-      field: typeof q.sort_by === 'string' ? q.sort_by : 'created_at',
+      field: typeof q.sort_by === 'string' ? q.sort_by : defaultSortField,
       direction: q.sort_order === 'asc' ? 'asc' : 'desc',
     };
 
@@ -73,6 +72,20 @@ export class QueryParser {
     }
 
     return { filters, sort, pagination, errors };
+  }
+
+  /**
+   * Get default sort field based on the endpoint
+   */
+  private static getDefaultSortField(path: string): string {
+    if (path.includes('/events')) {
+      return 'created_at';
+    } else if (path.includes('/participants')) {
+      return 'created_at';
+    } else if (path.includes('/logs')) {
+      return 'created_at';
+    }
+    return 'created_at';
   }
 
   static sanitizeSearchTerm(term: string): string {
@@ -109,5 +122,3 @@ export class QueryParser {
     return d instanceof Date && !isNaN(d.getTime());
   }
 }
-
-

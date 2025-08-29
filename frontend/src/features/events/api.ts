@@ -22,22 +22,40 @@ export interface EventWithStats extends Event {
   status: 'upcoming' | 'ongoing' | 'ended';
 }
 
-export interface EventResponse {
-  data: Event;
+export interface EventsQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  tag?: string;
+  event_status?: 'upcoming' | 'ongoing' | 'ended';
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
 }
 
-export async function getEventById(eventId: string): Promise<EventResponse> {
-  return apiFetch(`/api/admin/events/${eventId}`);
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    total: number;
+    totalPages: number;
+    page: number;
+    limit: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
 }
 
-export async function createEvent(eventData: Omit<Event, 'id' | 'created_at'>): Promise<Event> {
+export async function getEventById(eventId: string, token?: string): Promise<Event> {
+  return apiFetch(`/api/admin/events/${eventId}`, {}, token);
+}
+
+export async function createEvent(eventData: Omit<Event, 'id' | 'created_at'>, token?: string): Promise<Event> {
   return apiFetch('/api/admin/events', {
     method: 'POST',
     body: JSON.stringify(eventData)
-  });
+  }, token);
 }
 
-export async function getAllEvents(params: Record<string, any> = {}): Promise<{ 
+export async function getAllEvents(params: Record<string, any> = {}, token?: string): Promise<{ 
   data: EventWithStats[];
   pagination: { 
     total: number;
@@ -49,5 +67,5 @@ export async function getAllEvents(params: Record<string, any> = {}): Promise<{
   }
 }> {
   const qs = toQueryString(params);
-  return apiFetch(`/api/admin/events${qs}`);
+  return apiFetch(`/api/admin/events${qs}`, {}, token);
 }

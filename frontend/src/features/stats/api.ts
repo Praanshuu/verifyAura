@@ -1,3 +1,5 @@
+// frontend/src/features/stats/api.ts
+
 import { apiFetch } from '@/lib/api';
 
 export interface DashboardStats {
@@ -16,6 +18,6 @@ export interface DashboardStats {
   }>;
 }
 
-export function getStats(): Promise<DashboardStats> {
-  return apiFetch('/api/admin/stats');
+export function getStats(token?: string): Promise<DashboardStats> {
+  return apiFetch('/api/admin/stats', {}, token);
 }

@@ -18,57 +18,88 @@ export interface ParticipantWithEvent extends Participant {
   event_code: string;
 }
 
+export interface ParticipantsResponse {
+  data: ParticipantWithEvent[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
 export async function getParticipantsByEvent(
   eventId: string,
   page: number = 1,
-  limit: number = 10
-): Promise<{ data: ParticipantWithEvent[]; pagination: { total: number; page: number; limit: number; totalPages: number; hasNext: boolean; hasPrev: boolean } }> {
+  limit: number = 10,
+  token?: string
+): Promise<ParticipantsResponse> {
   const qs = toQueryString({ event_id: eventId, page, limit });
-  return apiFetch(`/api/admin/participants${qs}`);
+  return apiFetch(`/api/admin/participants${qs}`, {}, token);
 }
 
 export async function getAllParticipants(
   page: number = 1,
-  limit: number = 10
-): Promise<{ data: ParticipantWithEvent[]; pagination: { total: number; page: number; limit: number; totalPages: number; hasNext: boolean; hasPrev: boolean } }> {
+  limit: number = 10,
+  token?: string
+): Promise<ParticipantsResponse> {
   const qs = toQueryString({ page, limit });
-  return apiFetch(`/api/admin/participants${qs}`);
+  return apiFetch(`/api/admin/participants${qs}`, {}, token);
 }
 
-export function getParticipantById(participantId: string): Promise<any> {
-  return apiFetch(`/api/admin/participants/${participantId}`);
+export function getParticipantById(participantId: string, token?: string): Promise<ParticipantWithEvent> {
+  return apiFetch(`/api/admin/participants/${participantId}`, {}, token);
 }
 
-export function createParticipant(participantData: Omit<Participant, 'id' | 'created_at'>): Promise<any> {
+export function createParticipant(
+  participantData: Omit<Participant, 'id' | 'created_at'>,
+  token?: string
+): Promise<Participant> {
+  // Only send required fields
+  const payload: {
+    event_id: string;
+    name: string;
+    email: string;
+    certificate_id?: string;
+  } = {
+    event_id: participantData.event_id,
+    name: participantData.name,
+    email: participantData.email,
+  };
+  if (participantData.certificate_id) {
+    payload.certificate_id = participantData.certificate_id;
+  }
   return apiFetch('/api/admin/participants', { 
     method: 'POST', 
-    body: JSON.stringify(participantData) 
-  });
+    body: JSON.stringify(payload) 
+  }, token);
 }
 
-export function updateParticipant(participantId: string, updates: Partial<Participant>): Promise<any> {
+export function updateParticipant(participantId: string, updates: Partial<Participant>, token?: string): Promise<Participant> {
   return apiFetch(`/api/admin/participants/${participantId}`, { 
     method: 'PUT', 
     body: JSON.stringify(updates) 
-  });
+  }, token);
 }
 
-export function revokeCertificate(participantId: string, reason: string): Promise<any> {
+export function revokeCertificate(token: string, participantId: string, reason: string): Promise<Participant> {
   return apiFetch(`/api/admin/participants/${participantId}/revoke`, { 
     method: 'PATCH', 
     body: JSON.stringify({ revoke: true, reason }) 
-  });
+  }, token);
 }
 
-export function restoreCertificate(participantId: string): Promise<any> {
+export function restoreCertificate(token: string, participantId: string): Promise<Participant> {
   return apiFetch(`/api/admin/participants/${participantId}/revoke`, { 
     method: 'PATCH', 
     body: JSON.stringify({ revoke: false }) 
-  });
+  }, token);
 }
 
-export function deleteParticipant(participantId: string): Promise<void> {
+export function deleteParticipant(participantId: string, token?: string): Promise<void> {
   return apiFetch(`/api/admin/participants/${participantId}`, { 
     method: 'DELETE' 
-  });
+  }, token);
 }

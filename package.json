@@ -1,0 +1,25 @@
+{
+  "name": "verify-aura",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Praanshuu/verify-aura.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Praanshuu/verify-aura/issues"
+  },
+  "homepage": "https://github.com/Praanshuu/verify-aura#readme"
+}
