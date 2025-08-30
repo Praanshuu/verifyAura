@@ -18,7 +18,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   // Determine if this is an admin route
   const isAdminRoute = path.startsWith('/api/admin');
-  let headers: HeadersInit = {
+  const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
@@ -35,32 +35,42 @@ export async function apiFetch<T>(
   });
 
   if (!res.ok) {
-    let errBody: any = null;
+    let errBody: unknown = null;
     try { 
       errBody = await res.json(); 
     } catch (e) {
       console.error('Failed to parse error response', e);
     }
-    
-    const message = errBody?.message || errBody?.error || 
+
+    // Type guard for error body
+    const getErrorProp = <T>(key: string, fallback: T): T => {
+      if (errBody && typeof errBody === 'object' && key in errBody) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (errBody as any)[key] as T;
+      }
+      return fallback;
+    };
+
+    const message = getErrorProp('message', '') || getErrorProp('error', '') ||
                    `API Error ${res.status} - ${res.statusText}`;
-    
-    // Create a structured error object
+
     const apiError: ApiError = {
       message,
-      code: errBody?.code,
+      code: getErrorProp('code', undefined),
       status: res.status
     };
 
     // Handle specific authentication errors without redirecting
     if (res.status === 401) {
-      if (errBody?.code === 'NO_SESSION' || errBody?.code === 'AUTH_FAILED') {
+      const code = getErrorProp<string | undefined>('code', undefined);
+      if (code === 'NO_SESSION' || code === 'AUTH_FAILED') {
         throw new Error('Authentication expired. Please sign in again.');
       }
     }
 
     if (res.status === 403) {
-      if (errBody?.code === 'INSUFFICIENT_PERMISSIONS') {
+      const code = getErrorProp<string | undefined>('code', undefined);
+      if (code === 'INSUFFICIENT_PERMISSIONS') {
         throw new Error('You do not have permission to perform this action.');
       }
     }
@@ -71,7 +81,7 @@ export async function apiFetch<T>(
   return res.json() as Promise<T>;
 }
 
-export function toQueryString(params: Record<string, any> = {}): string {
+export function toQueryString(params: Record<string, unknown> = {}): string {
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') return;
