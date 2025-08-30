@@ -55,7 +55,7 @@ export async function createEvent(eventData: Omit<Event, 'id' | 'created_at'>, t
   }, token);
 }
 
-export async function getAllEvents(params: Record<string, any> = {}, token?: string): Promise<{ 
+export async function getAllEvents(params: EventsQuery = {}, token?: string): Promise<{ 
   data: EventWithStats[];
   pagination: { 
     total: number;
@@ -66,6 +66,6 @@ export async function getAllEvents(params: Record<string, any> = {}, token?: str
     hasPrev: boolean;
   }
 }> {
-  const qs = toQueryString(params);
+  const qs = Object.keys(params).length ? `?${toQueryString(params as Record<string, unknown>)}` : '';
   return apiFetch(`/api/admin/events${qs}`, {}, token);
 }
