@@ -1,0 +1,1 @@
+{"version":3,"file":"generateCertificateId.d.ts","sourceRoot":"","sources":["../../src/utils/generateCertificateId.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,cAAc,EAAE,MAAM,uBAAuB,CAAC;AAM5D,wBAAgB,qBAAqB,CAAC,SAAS,EAAE,MAAM,EAAE,SAAS,EAAE,MAAM,UAIzE;AAQD,wBAAsB,2BAA2B,CAC/C,QAAQ,EAAE,cAAc,EACxB,SAAS,EAAE,MAAM,EACjB,SAAS,EAAE,MAAM,EACjB,WAAW,SAAI,mBA8BhB"}
